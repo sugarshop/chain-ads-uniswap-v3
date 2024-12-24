@@ -6,6 +6,10 @@ template for developing Solidity smart contracts with sensible defaults.
 The provided documentation and code give an in-depth look into a Uniswap V3 swap operation using Foundry, a smart
 contract development tool. Let's break down the essentials.
 
+### Infrastructure Diagram
+
+![Infrastructure Diagram](./resources/infra.png)
+
 ### Uniswap V3 Swap
 
 The Uniswap V3 swap functionality is encapsulated within the `UniswapV3Swap` contract. This contract demonstrates two
