@@ -31,6 +31,7 @@ import {UniswapV3Swap, ISwapRouter, IERC20} from "./UniswapV3Swap.sol";
 contract MultiTokenManager is ERC1155, Ownable, ReentrancyGuard {
     error InvalidERC20Address();
     error TokenNotRegistered();
+    error CallerNotApproved();
 
     /// @notice Mapping from tokenId to its corresponding ERC20 token address
     /// @dev Each ERC1155 token represents a wrapper for an ERC20 token
@@ -121,7 +122,7 @@ contract MultiTokenManager is ERC1155, Ownable, ReentrancyGuard {
         // 将对应数量的ERC20代币转给用户
         IERC20(tokenIn).transfer(msg.sender, amountIn);
         
-        // 调用UniswapV3Swap的swap方法
+        // 调用 UniswapV3Swap 的 swap 方法
         amountOut = uniswapV3Swap.swapExactInputSingleHop(
             tokenIn,
             tokenOut,
@@ -139,5 +140,18 @@ contract MultiTokenManager is ERC1155, Ownable, ReentrancyGuard {
         
         _burn(msg.sender, tokenId, amount);
         emit TokenBurned(tokenId, msg.sender, amount);
+    }
+
+    // 销毁他人的 ERC1155 币（需要授权）
+    function burnFrom(
+        address from,
+        uint256 tokenId,
+        uint256 amount
+    ) external nonReentrant {
+        if (tokenIdToERC20[tokenId] == address(0)) revert TokenNotRegistered();
+        if (!isApprovedForAll(from, msg.sender)) revert CallerNotApproved();
+        
+        _burn(from, tokenId, amount);
+        emit TokenBurned(tokenId, from, amount);
     }
 }
