@@ -63,13 +63,13 @@ contract MultiTokenManager is ERC1155, Ownable, ReentrancyGuard {
         return _uris[tokenId];
     }
     
-    // 设置 URI
+    // set URI
     function setURI(uint256 tokenId, string memory newuri) public onlyOwner {
         _uris[tokenId] = newuri;
         emit URI(newuri, tokenId);
     }
 
-    // 注册 ERC20 代币的结构体
+    // struct of ERC20 token
     struct TokenInfo {
         address erc20Address;
         string name;
@@ -77,7 +77,8 @@ contract MultiTokenManager is ERC1155, Ownable, ReentrancyGuard {
         uint8 decimals;
     }
 
-    // 注册ERC20代币，返回 tokenId ERC20 代币被注册后，可以铸造和销毁，并且 ERC20 代币被 ERC1155 代币管理
+    // register ERC20 token, return tokenId
+    // ERC20 token is registered after minting and burning, and is managed by ERC1155 token
     function registerToken(TokenInfo calldata info) external onlyOwner returns (uint256) {
         if (info.erc20Address == address(0)) revert InvalidERC20Address();
         
@@ -88,7 +89,7 @@ contract MultiTokenManager is ERC1155, Ownable, ReentrancyGuard {
         return newTokenId;
     }
 
-    // 铸造 ERC1155 币
+    // mint ERC1155 token
     function mint(
         address to,
         uint256 tokenId,
@@ -103,10 +104,10 @@ contract MultiTokenManager is ERC1155, Ownable, ReentrancyGuard {
     ISwapRouter public constant UNISWAP_ROUTER = 
         ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
-    // 将 ERC1155 代币兑换为 ERC20 代币
-    // todo: 需要添加一个函数来获取当前的池子fee
-    // todo: 需要添加一个函数来获取当前的池子地址
-    // todo: 需要添加一个函数来将 ERC1155 代币使用 ERC20 代币兑换为 ERC721 代币
+    // swap ERC1155 token to ERC20 token
+    // todo: add a function to get current pool fee
+    // todo: add a function to get current pool address
+    // todo: add a function to swap ERC1155 token to ERC20 token
     function swapExactInputSingle(
         uint256 tokenId,
         address tokenOut,
@@ -116,13 +117,13 @@ contract MultiTokenManager is ERC1155, Ownable, ReentrancyGuard {
         if (tokenIdToERC20[tokenId] == address(0)) revert TokenNotRegistered();
         address tokenIn = tokenIdToERC20[tokenId];
         
-        // 先销毁用户的ERC1155代币
+        // burn user's ERC1155 token
         _burn(msg.sender, tokenId, amountIn);
         
-        // 将对应数量的ERC20代币转给用户
+        // transfer corresponding amount of ERC20 token to user
         IERC20(tokenIn).transfer(msg.sender, amountIn);
         
-        // 调用 UniswapV3Swap 的 swap 方法
+        // call UniswapV3Swap's swap method
         amountOut = uniswapV3Swap.swapExactInputSingleHop(
             tokenIn,
             tokenOut,
@@ -131,7 +132,7 @@ contract MultiTokenManager is ERC1155, Ownable, ReentrancyGuard {
         );
     }
 
-    // 销毁 ERC1155 币
+    // burn self ERC1155 token
     function burn(
         uint256 tokenId,
         uint256 amount
@@ -142,14 +143,17 @@ contract MultiTokenManager is ERC1155, Ownable, ReentrancyGuard {
         emit TokenBurned(tokenId, msg.sender, amount);
     }
 
-    // 销毁他人的 ERC1155 币（需要授权）
+    // burn other's ERC1155 token (need approval)
     function burnFrom(
         address from,
         uint256 tokenId,
         uint256 amount
     ) external nonReentrant {
+        // check if token is registered
         if (tokenIdToERC20[tokenId] == address(0)) revert TokenNotRegistered();
-        if (!isApprovedForAll(from, msg.sender)) revert CallerNotApproved();
+        
+        // check if caller is approved
+        if (msg.sender != from && !isApprovedForAll(from, msg.sender)) revert CallerNotApproved();
         
         _burn(from, tokenId, amount);
         emit TokenBurned(tokenId, from, amount);
