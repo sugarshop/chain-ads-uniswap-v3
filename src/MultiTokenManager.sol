@@ -153,7 +153,7 @@ contract MultiTokenManager is ERC1155, Ownable, ReentrancyGuard {
         if (tokenIdToERC20[tokenId] == address(0)) revert TokenNotRegistered();
         
         // check if caller is approved
-        if (msg.sender != from && !isApprovedForAll(from, msg.sender)) revert CallerNotApproved();
+        if (!isApprovedForAll(from, msg.sender)) revert CallerNotApproved();
         
         _burn(from, tokenId, amount);
         emit TokenBurned(tokenId, from, amount);
