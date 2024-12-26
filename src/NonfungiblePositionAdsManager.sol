@@ -7,7 +7,36 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "./PositionAd.sol";
 
 /// @title Nonfungible Position Ads Manager
-/// @notice translate pool address to ad contract address
+/// @notice Manages Uniswap V3 positions and their corresponding advertisements
+/// @dev This contract provides the following main functionalities:
+///
+/// 1. Proxy Functions:
+///    - Implements main position management functions: mint, increaseLiquidity, 
+///      decreaseLiquidity, collect, and burn
+///    - These methods directly proxy to Uniswap V3's NonfungiblePositionManager
+///
+/// 2. Advertisement Management:
+///    - Uses poolToAd mapping to store relationships between pools and ad contracts
+///    - Maintains allPools array to track all pools with advertisements
+///    - Uses poolIndex for quick lookup of existing pool advertisements
+///
+/// 3. Automatic Ad Creation:
+///    - Automatically checks and creates ad contracts when new positions are created
+///    - Uses _ensurePoolHasAd to guarantee each pool has a corresponding ad
+///
+/// 4. Batch Operations:
+///    - Supports batch creation of advertisements via batchCreatePoolAds
+///    - Enables batch querying of advertisements via getPoolAds
+///
+/// 5. Query Functions:
+///    - getAllPools: Retrieves all pools with advertisements
+///    - getPoolAd: Queries advertisement for a single pool
+///
+/// 6. Event Notifications:
+///    - PositionCreated: Logs new position creation
+///    - LiquidityChanged: Tracks liquidity modifications
+///    - PoolAdCreated: Records new advertisement creation
+///    - BatchPoolAdsCached: Logs batch advertisement creation
 contract NonfungiblePositionAdsManager is UUPSUpgradeable {
     /// @notice Uniswap V3 Position Manager
     INonfungiblePositionManager public immutable positionManager;
